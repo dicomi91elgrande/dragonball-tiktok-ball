@@ -2,7 +2,7 @@
 # En Render: New + -> Blueprint -> conecta el repo con este archivo.
 services:
   - type: web
-    name: dragonball-tiktok-battle
+    name: dragonball-tiktok-ball
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
