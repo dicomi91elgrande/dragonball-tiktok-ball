@@ -447,6 +447,8 @@
   body,
   body.stream-vertical,
   body.stream-band{background:transparent !important;}
+  body.chroma-key,
+  body.chroma-key #app{background:#00ff00 !important;}
   .bg,
   .stars,
   #clash,
@@ -2229,6 +2231,7 @@ const params = new URLSearchParams(location.search);
 if(params.get('obs')==='1') document.body.classList.add('obs');
 if(params.get('vertical')==='1' || params.get('stream')==='vertical') document.body.classList.add('stream-vertical');
 if(params.get('stream')==='band' || params.get('band')==='1') document.body.classList.add('stream-band');
+if(params.get('chroma')==='1' || params.get('key')==='green') document.body.classList.add('chroma-key');
 injectMonigote('left'); injectMonigote('right');
 setFace('left', null, '?'); setFace('right', null, '?');
 fillSelects();
