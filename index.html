@@ -10,8 +10,8 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html,body{height:100%; overflow:hidden; font-family:"Trebuchet MS","Segoe UI",sans-serif; color:#fff;
-    background:#05060d;}
-  #app{position:relative; width:100vw; height:100vh;}
+    background:transparent;}
+  #app{position:relative; width:100vw; height:100vh; background:transparent;}
 
   /* ---------- fondo ---------- */
   .bg{position:absolute; inset:0; z-index:0;
@@ -208,13 +208,13 @@
   .monigote{position:relative; z-index:2; width:min(30vw,360px); height:46vh;
     display:flex; align-items:flex-end; justify-content:center;}
   .mon-svg{height:100%; width:auto; overflow:visible; transition:filter .4s;
-    animation:bob 2.6s ease-in-out infinite; transform-origin:50% 100%;}
+    transform-origin:50% 100%;}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-  .charbox.charging .mon-svg{animation:bobFast .45s ease-in-out infinite;}
+  .charbox.charging .mon-svg{animation:none;}
   @keyframes bobFast{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.03)}}
   .sprite-layer{transform-box:fill-box; transform-origin:50% 100%;}
-  .sprite-layer.sprite-bob{animation:bob 2.6s ease-in-out infinite;}
-  .charbox.charging .sprite-layer.sprite-bob{animation:bobFast .45s ease-in-out infinite;}
+  .sprite-layer.sprite-bob{animation:none;}
+  .charbox.charging .sprite-layer.sprite-bob{animation:none;}
   .mon-svg image{filter:saturate(1.05);}
   .mon-svg .arms-charge, .mon-svg .kiball{display:none;}
   .charbox.charging .mon-svg .arms-idle{display:none;}
@@ -285,8 +285,6 @@
   body.victory-clean #clash,
   body.victory-clean .feed-side,
   body.victory-clean .duel-users,
-  body.victory-clean .scouter,
-  body.victory-clean .stage,
   body.victory-clean .champion,
   body.victory-clean .queue{display:none !important;}
 
@@ -344,7 +342,7 @@
   /* ---------- modo stream vertical 9:16 (?vertical=1) ---------- */
   body.stream-vertical{background:#000;}
   body.stream-vertical #app{width:min(100vw, 56.25vh); height:min(100vh, 177.7778vw);
-    margin:auto; overflow:hidden; container-type:size; background:#05060d;}
+    margin:auto; overflow:hidden; container-type:size; background:transparent;}
   body.stream-vertical .stage{grid-template-columns:1fr 12cqw 1fr; padding:0 2cqw 3cqh;}
   body.stream-vertical .duel-users{left:3.5cqw; right:3.5cqw; top:1.2cqh; gap:10px;}
   body.stream-vertical .duel-user{font-size:clamp(22px,5.8cqw,38px);}
@@ -397,7 +395,7 @@
   /* ---------- modo stream franja horizontal 1280x720 (?stream=band) ---------- */
   body.stream-band{background:#000;}
   body.stream-band #app{width:100vw; height:60vh; margin:20vh 0; overflow:hidden;
-    container-type:size; background:#05060d;}
+    container-type:size; background:transparent;}
   body.stream-band .stage{grid-template-columns:1fr 110px 1fr; padding:0 2.2cqw 2cqh;}
   body.stream-band .duel-users{left:22cqw; right:22cqw; top:1.2cqh; gap:8px;}
   body.stream-band .duel-user{font-size:clamp(16px,2.35cqh,24px);}
@@ -444,6 +442,35 @@
   body.stream-band #feed-left{left:47%; top:27%;}
   body.stream-band #feed-right{left:53%; top:42%;}
   body.stream-band .gift-pop{font-size:14px; padding:4px 10px;}
+
+  /* ---------- overlay limpio: solo personajes + scouters ---------- */
+  body,
+  body.stream-vertical,
+  body.stream-band{background:transparent !important;}
+  .bg,
+  .stars,
+  #clash,
+  .center,
+  .duel-users,
+  .feed-side,
+  .nameplate,
+  .queue,
+  .champion,
+  .empty-slot,
+  .victory,
+  .aura,
+  .particles,
+  .flash{display:none !important;}
+  .charbox.lightning::before,
+  .charbox.lightning::after{display:none !important;}
+  .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 7vw 4vh;}
+  .fighter.left{grid-column:1; align-items:flex-start;}
+  .fighter.right{grid-column:2; align-items:flex-end;}
+  #box-left{transform:translateX(-2vw) !important;}
+  #box-right{transform:translateX(2vw) !important;}
+  body.shake #app,
+  .charbox.transform .mon-svg,
+  .charbox.transform .sprite-layer{animation:none !important;}
 </style>
 </head>
 <body>
