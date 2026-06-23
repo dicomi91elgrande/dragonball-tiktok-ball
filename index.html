@@ -519,7 +519,7 @@
       <div class="sc-head">
         <div class="sc-avatar empty" id="sc-avatar-left">?</div>
         <div class="sc-data">
-          <div class="sc-top"><span class="sc-tag">PODER</span><i class="sc-dot"></i></div>
+          <div class="sc-top"><span class="sc-tag" id="sc-tag-left">PODER</span><i class="sc-dot"></i></div>
           <div class="sc-readout"><span class="sc-ki" id="ki-left">0</span><span class="sc-unit">KI</span></div>
           <div class="sc-user" id="sc-user-left"></div>
         </div>
@@ -533,7 +533,7 @@
       <div class="sc-head">
         <div class="sc-avatar empty" id="sc-avatar-right">?</div>
         <div class="sc-data">
-          <div class="sc-top"><span class="sc-tag">PODER</span><i class="sc-dot"></i></div>
+          <div class="sc-top"><span class="sc-tag" id="sc-tag-right">PODER</span><i class="sc-dot"></i></div>
           <div class="sc-readout"><span class="sc-ki" id="ki-right">0</span><span class="sc-unit">KI</span></div>
           <div class="sc-user" id="sc-user-right"></div>
         </div>
@@ -1415,6 +1415,8 @@ function setScouterBars(side, team){
   sc.classList.toggle('ki-danger', ki >= 1000);
   const userEl = document.getElementById('sc-user-'+side);
   if(userEl) userEl.textContent = s.name ? (s.user || s.name || '') : '';
+  const tagEl = document.getElementById('sc-tag-'+side);
+  if(tagEl) tagEl.textContent = s.name ? (s.user || s.name || 'PODER') : 'PODER';
   const wrap = sc.querySelector('.sc-bars');
   if(!wrap) return;
   const fills = scouterCellFills(side);
