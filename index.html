@@ -471,9 +471,11 @@
   #box-left{transform:translateX(-2vw) !important;}
   #box-right{transform:translateX(2vw) !important;}
   body.solo-mode .stage{display:flex; align-items:flex-end; justify-content:center; padding:0 0 4vh;}
-  body.solo-mode .fighter.left{align-items:center; width:100%;}
+  body.solo-mode .fighter.left{align-items:center; width:100%; opacity:0; transition:opacity .65s ease;}
   body.solo-mode #box-left{transform:none !important;}
-  body.solo-mode #scouter-left{left:50%; right:auto; transform:translateX(-50%);}
+  body.solo-mode #scouter-left{left:50%; right:auto; transform:translateX(-50%); opacity:0; transition:opacity .65s ease;}
+  body.solo-mode.solo-visible .fighter.left,
+  body.solo-mode.solo-visible #scouter-left{opacity:1;}
   body.solo-mode #scouter-right,
   body.solo-mode .fighter.right{display:none !important;}
   body:not(.solo-mode) .fighter,
@@ -731,9 +733,11 @@ let carryWinner = null;      // ganador que se queda tras reset para defender ra
 let timer = DURATION, timerId = null, running = false, ended = false;
 const SOLO_DONATION_MODE = true;
 const SOLO_VISIBLE_MS = 7000;
+const SOLO_FADE_MS = 650;
 const soloEnergy = {};       // username -> KI acumulado en el modo aparición individual
 const soloChoice = {};       // username -> último personaje usado/elegido
 let soloHideTimer = null;
+let soloClearTimer = null;
 
 /* ====================== RENDER ====================== */
 function fmt(s){ const m=Math.floor(s/60), x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
@@ -2025,14 +2029,21 @@ function blankSide(side){
   renderSide(side);
 }
 
-function hideSoloDisplay(){
-  if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
+function clearSoloDisplay(){
+  if(soloClearTimer){ clearTimeout(soloClearTimer); soloClearTimer = null; }
   document.body.classList.remove('solo-mode');
+  document.body.classList.remove('solo-visible');
   blankSide('left');
   blankSide('right');
   kiShown.left = 0; kiShown.right = 0;
   document.getElementById('ki-left').textContent = '0';
   document.getElementById('ki-right').textContent = '0';
+}
+
+function hideSoloDisplay(){
+  if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
+  document.body.classList.remove('solo-visible');
+  soloClearTimer = setTimeout(clearSoloDisplay, SOLO_FADE_MS);
 }
 
 function soloCharacterFor(userKey, username, named, face){
@@ -2051,6 +2062,8 @@ function showSoloDonation(userKey, username, named, face){
   const entry = soloCharacterFor(userKey, username, named, face);
   if(!entry) return;
   if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
+  if(soloClearTimer){ clearTimeout(soloClearTimer); soloClearTimer = null; }
+  document.body.classList.remove('solo-visible');
   document.body.classList.add('solo-mode');
   blankSide('right');
   pickCharacter('left', entry.name, entry.face, entry.user, entry.key);
@@ -2058,6 +2071,7 @@ function showSoloDonation(userKey, username, named, face){
   sides.left.supporters = [username || entry.user];
   checkTransform('left');
   renderSide('left');
+  requestAnimationFrame(()=>document.body.classList.add('solo-visible'));
   soloHideTimer = setTimeout(hideSoloDisplay, SOLO_VISIBLE_MS);
 }
 
