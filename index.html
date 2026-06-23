@@ -470,6 +470,14 @@
   .fighter.right{grid-column:2; align-items:flex-end;}
   #box-left{transform:translateX(-2vw) !important;}
   #box-right{transform:translateX(2vw) !important;}
+  body.solo-mode .stage{display:flex; align-items:flex-end; justify-content:center; padding:0 0 4vh;}
+  body.solo-mode .fighter.left{align-items:center; width:100%;}
+  body.solo-mode #box-left{transform:none !important;}
+  body.solo-mode #scouter-left{left:50%; right:auto; transform:translateX(-50%);}
+  body.solo-mode #scouter-right,
+  body.solo-mode .fighter.right{display:none !important;}
+  body:not(.solo-mode) .fighter,
+  body:not(.solo-mode) .scouter{display:none !important;}
   body.shake #app,
   .charbox.transform .mon-svg,
   .charbox.transform .sprite-layer{animation:none !important;}
@@ -721,6 +729,11 @@ const giftRepeatState = {};  // username+regalo -> último repeatcount visto en 
 const fightQueue = [];       // entradas pendientes cuando los dos lados están ocupados
 let carryWinner = null;      // ganador que se queda tras reset para defender racha
 let timer = DURATION, timerId = null, running = false, ended = false;
+const SOLO_DONATION_MODE = true;
+const SOLO_VISIBLE_MS = 7000;
+const soloEnergy = {};       // username -> KI acumulado en el modo aparición individual
+const soloChoice = {};       // username -> último personaje usado/elegido
+let soloHideTimer = null;
 
 /* ====================== RENDER ====================== */
 function fmt(s){ const m=Math.floor(s/60), x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
@@ -2002,6 +2015,50 @@ function giftEnergyValue(d, userKey){
   return Math.max(0, Math.round(coins * units));
 }
 
+function blankSide(side){
+  sides[side] = {name:null, energy:0, phase:0, supporters:[], face:null, user:null, ownerKey:null, streak:0};
+  const fill = document.getElementById('fill-'+side);
+  if(fill){ clearTimeout(fill._rt); fill.style.transition='none'; fill.style.transform='scaleX(0)'; void fill.offsetWidth; fill.style.transition=''; }
+  setFace(side, null, '?');
+  renderSide(side);
+}
+
+function hideSoloDisplay(){
+  if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
+  document.body.classList.remove('solo-mode');
+  blankSide('left');
+  blankSide('right');
+  kiShown.left = 0; kiShown.right = 0;
+  document.getElementById('ki-left').textContent = '0';
+  document.getElementById('ki-right').textContent = '0';
+}
+
+function soloCharacterFor(userKey, username, named, face){
+  const wanted = pendingPick[userKey] || null;
+  const chosen = wanted?.name || (named && hasPlayableSprite(named) ? named : null) || soloChoice[userKey]?.name || randomPlayableCharacter();
+  if(!chosen || !hasPlayableSprite(chosen)) return null;
+  const entry = {name:chosen, face:wanted?.face || face || soloChoice[userKey]?.face || null,
+    user:wanted?.user || username || soloChoice[userKey]?.user || chosen, key:userKey};
+  soloChoice[userKey] = entry;
+  delete pendingPick[userKey];
+  return entry;
+}
+
+function showSoloDonation(userKey, username, named, face, value){
+  const entry = soloCharacterFor(userKey, username, named, face);
+  if(!entry) return;
+  if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
+  document.body.classList.add('solo-mode');
+  blankSide('right');
+  pickCharacter('left', entry.name, entry.face, entry.user, entry.key);
+  soloEnergy[userKey] = (soloEnergy[userKey] || 0) + value;
+  sides.left.energy = soloEnergy[userKey];
+  sides.left.supporters = [username || entry.user];
+  checkTransform('left');
+  renderSide('left');
+  soloHideTimer = setTimeout(hideSoloDisplay, SOLO_VISIBLE_MS);
+}
+
 function handleEvent(d){
   const ev = (d.event||'').toLowerCase();
   const userKey = d.username || d.uniqueId || d.userId || d.user || d.nickname || 'alguien';
@@ -2010,6 +2067,20 @@ function handleEvent(d){
   const named = d.character || findCharText(text) || null;
   const face = avatarOf(d);
   const isGift = ev==='gift' || ev==='regalo' || d.coins!=null || d.giftName || d.giftname;
+
+  if(SOLO_DONATION_MODE){
+    if(named && !isGift && hasPlayableSprite(named)){
+      pendingPick[userKey] = {name:named, face, user:username, key:userKey};
+      soloChoice[userKey] = pendingPick[userKey];
+      return;
+    }
+    if(isGift){
+      const value = giftEnergyValue(d, userKey);
+      if(value <= 0) return;
+      showSoloDonation(userKey, username, named, face, value);
+    }
+    return;
+  }
 
   if(named && !isGift){
     if(!named) return;
