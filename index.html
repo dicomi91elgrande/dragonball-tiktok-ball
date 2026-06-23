@@ -471,12 +471,12 @@
   #box-left{transform:translateX(10vw) !important;}
   #box-right{transform:translateX(-10vw) !important;}
   body.solo-mode .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 18vw 4vh;}
-  body.solo-mode .fighter.left{align-items:flex-start; opacity:0; transition:opacity .65s ease;}
-  body.solo-mode .fighter.right{align-items:flex-end; opacity:0; transition:opacity .65s ease;}
+  body.solo-mode .fighter.left{align-items:flex-start; opacity:0;}
+  body.solo-mode .fighter.right{align-items:flex-end; opacity:0;}
   body.solo-mode #scouter-left{top:18vh; left:18vw; right:auto; transform:none;}
   body.solo-mode #scouter-right{top:18vh; right:18vw; left:auto; transform:none;}
   body.solo-mode #scouter-left,
-  body.solo-mode #scouter-right{opacity:0; transition:opacity .65s ease;}
+  body.solo-mode #scouter-right{opacity:0;}
   body.solo-mode.slot-left-visible .fighter.left,
   body.solo-mode.slot-left-visible #scouter-left,
   body.solo-mode.slot-right-visible .fighter.right,
@@ -736,12 +736,11 @@ let carryWinner = null;      // ganador que se queda tras reset para defender ra
 let timer = DURATION, timerId = null, running = false, ended = false;
 const SOLO_DONATION_MODE = true;
 const SOLO_VISIBLE_MS = 7000;
-const SOLO_FADE_MS = 650;
 const soloEnergy = {};       // username -> KI acumulado en el modo aparición individual
 const soloChoice = {};       // username -> último personaje usado/elegido
 const donorSlots = {
-  left: {userKey:null, hideTimer:null, clearTimer:null, lastShown:0},
-  right:{userKey:null, hideTimer:null, clearTimer:null, lastShown:0},
+  left: {userKey:null, hideTimer:null, lastShown:0},
+  right:{userKey:null, hideTimer:null, lastShown:0},
 };
 
 /* ====================== RENDER ====================== */
@@ -2039,7 +2038,6 @@ function slotClass(side){ return 'slot-'+side+'-visible'; }
 function clearDonorSlot(side, expectedUserKey){
   const slot = donorSlots[side];
   if(expectedUserKey && slot.userKey !== expectedUserKey) return;
-  if(slot.clearTimer){ clearTimeout(slot.clearTimer); slot.clearTimer = null; }
   if(slot.hideTimer){ clearTimeout(slot.hideTimer); slot.hideTimer = null; }
   document.body.classList.remove(slotClass(side));
   slot.userKey = null;
@@ -2055,8 +2053,7 @@ function hideDonorSlot(side, expectedUserKey){
   const slot = donorSlots[side];
   if(expectedUserKey && slot.userKey !== expectedUserKey) return;
   if(slot.hideTimer){ clearTimeout(slot.hideTimer); slot.hideTimer = null; }
-  document.body.classList.remove(slotClass(side));
-  slot.clearTimer = setTimeout(()=>clearDonorSlot(side, expectedUserKey), SOLO_FADE_MS);
+  clearDonorSlot(side, expectedUserKey);
 }
 
 function soloCharacterFor(userKey, username, named, face){
@@ -2082,7 +2079,6 @@ function sideForDonorSlot(userKey){
 function displayDonorSlot(side, entry, username){
   const slot = donorSlots[side];
   if(slot.hideTimer){ clearTimeout(slot.hideTimer); slot.hideTimer = null; }
-  if(slot.clearTimer){ clearTimeout(slot.clearTimer); slot.clearTimer = null; }
   document.body.classList.add('solo-mode');
   document.body.classList.remove(slotClass(side));
   slot.userKey = entry.key;
@@ -2092,7 +2088,7 @@ function displayDonorSlot(side, entry, username){
   setFace(side, entry.face||null, entry.user||entry.name);
   checkTransform(side);
   renderSide(side);
-  requestAnimationFrame(()=>document.body.classList.add(slotClass(side)));
+  document.body.classList.add(slotClass(side));
   slot.hideTimer = setTimeout(()=>hideDonorSlot(side, entry.key), SOLO_VISIBLE_MS);
 }
 
