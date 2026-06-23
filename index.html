@@ -465,14 +465,16 @@
   .flash{display:none !important;}
   .charbox.lightning::before,
   .charbox.lightning::after{display:none !important;}
-  .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 7vw 4vh;}
+  .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 13vw 4vh;}
   .fighter.left{grid-column:1; align-items:flex-start;}
   .fighter.right{grid-column:2; align-items:flex-end;}
-  #box-left{transform:translateX(-2vw) !important;}
-  #box-right{transform:translateX(2vw) !important;}
-  body.solo-mode .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 7vw 4vh;}
+  #box-left{transform:translateX(5vw) !important;}
+  #box-right{transform:translateX(-5vw) !important;}
+  body.solo-mode .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 13vw 4vh;}
   body.solo-mode .fighter.left{align-items:flex-start; opacity:0; transition:opacity .65s ease;}
   body.solo-mode .fighter.right{align-items:flex-end; opacity:0; transition:opacity .65s ease;}
+  body.solo-mode #scouter-left{top:16vh; right:50%; transform:translateX(11vw);}
+  body.solo-mode #scouter-right{top:16vh; left:50%; transform:translateX(-11vw);}
   body.solo-mode #scouter-left,
   body.solo-mode #scouter-right{opacity:0; transition:opacity .65s ease;}
   body.solo-mode.slot-left-visible .fighter.left,
