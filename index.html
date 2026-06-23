@@ -2035,23 +2035,23 @@ function hideSoloDisplay(){
 
 function soloCharacterFor(userKey, username, named, face){
   const wanted = pendingPick[userKey] || null;
-  const chosen = wanted?.name || (named && hasPlayableSprite(named) ? named : null) || soloChoice[userKey]?.name || randomPlayableCharacter();
+  const giftPick = named && hasPlayableSprite(named) ? {name:named, face, user:username, key:userKey} : null;
+  const chosen = wanted?.name || giftPick?.name || soloChoice[userKey]?.name || null;
   if(!chosen || !hasPlayableSprite(chosen)) return null;
-  const entry = {name:chosen, face:wanted?.face || face || soloChoice[userKey]?.face || null,
+  const entry = {name:chosen, face:wanted?.face || giftPick?.face || soloChoice[userKey]?.face || null,
     user:wanted?.user || username || soloChoice[userKey]?.user || chosen, key:userKey};
   soloChoice[userKey] = entry;
   delete pendingPick[userKey];
   return entry;
 }
 
-function showSoloDonation(userKey, username, named, face, value){
+function showSoloDonation(userKey, username, named, face){
   const entry = soloCharacterFor(userKey, username, named, face);
   if(!entry) return;
   if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
   document.body.classList.add('solo-mode');
   blankSide('right');
   pickCharacter('left', entry.name, entry.face, entry.user, entry.key);
-  soloEnergy[userKey] = (soloEnergy[userKey] || 0) + value;
   sides.left.energy = soloEnergy[userKey];
   sides.left.supporters = [username || entry.user];
   checkTransform('left');
@@ -2077,7 +2077,8 @@ function handleEvent(d){
     if(isGift){
       const value = giftEnergyValue(d, userKey);
       if(value <= 0) return;
-      showSoloDonation(userKey, username, named, face, value);
+      soloEnergy[userKey] = (soloEnergy[userKey] || 0) + value;
+      showSoloDonation(userKey, username, named, face);
     }
     return;
   }
