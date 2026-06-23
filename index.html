@@ -470,14 +470,15 @@
   .fighter.right{grid-column:2; align-items:flex-end;}
   #box-left{transform:translateX(-2vw) !important;}
   #box-right{transform:translateX(2vw) !important;}
-  body.solo-mode .stage{display:flex; align-items:flex-end; justify-content:center; padding:0 0 4vh;}
-  body.solo-mode .fighter.left{align-items:center; width:100%; opacity:0; transition:opacity .65s ease;}
-  body.solo-mode #box-left{transform:none !important;}
-  body.solo-mode #scouter-left{left:50%; right:auto; transform:translateX(-50%); opacity:0; transition:opacity .65s ease;}
-  body.solo-mode.solo-visible .fighter.left,
-  body.solo-mode.solo-visible #scouter-left{opacity:1;}
-  body.solo-mode #scouter-right,
-  body.solo-mode .fighter.right{display:none !important;}
+  body.solo-mode .stage{grid-template-columns:minmax(0,1fr) minmax(0,1fr); padding:0 7vw 4vh;}
+  body.solo-mode .fighter.left{align-items:flex-start; opacity:0; transition:opacity .65s ease;}
+  body.solo-mode .fighter.right{align-items:flex-end; opacity:0; transition:opacity .65s ease;}
+  body.solo-mode #scouter-left,
+  body.solo-mode #scouter-right{opacity:0; transition:opacity .65s ease;}
+  body.solo-mode.slot-left-visible .fighter.left,
+  body.solo-mode.slot-left-visible #scouter-left,
+  body.solo-mode.slot-right-visible .fighter.right,
+  body.solo-mode.slot-right-visible #scouter-right{opacity:1;}
   body:not(.solo-mode) .fighter,
   body:not(.solo-mode) .scouter{display:none !important;}
   body.shake #app,
@@ -736,8 +737,10 @@ const SOLO_VISIBLE_MS = 7000;
 const SOLO_FADE_MS = 650;
 const soloEnergy = {};       // username -> KI acumulado en el modo aparición individual
 const soloChoice = {};       // username -> último personaje usado/elegido
-let soloHideTimer = null;
-let soloClearTimer = null;
+const donorSlots = {
+  left: {userKey:null, hideTimer:null, clearTimer:null, lastShown:0},
+  right:{userKey:null, hideTimer:null, clearTimer:null, lastShown:0},
+};
 
 /* ====================== RENDER ====================== */
 function fmt(s){ const m=Math.floor(s/60), x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
@@ -2029,21 +2032,29 @@ function blankSide(side){
   renderSide(side);
 }
 
-function clearSoloDisplay(){
-  if(soloClearTimer){ clearTimeout(soloClearTimer); soloClearTimer = null; }
-  document.body.classList.remove('solo-mode');
-  document.body.classList.remove('solo-visible');
-  blankSide('left');
-  blankSide('right');
-  kiShown.left = 0; kiShown.right = 0;
-  document.getElementById('ki-left').textContent = '0';
-  document.getElementById('ki-right').textContent = '0';
+function slotClass(side){ return 'slot-'+side+'-visible'; }
+
+function clearDonorSlot(side, expectedUserKey){
+  const slot = donorSlots[side];
+  if(expectedUserKey && slot.userKey !== expectedUserKey) return;
+  if(slot.clearTimer){ clearTimeout(slot.clearTimer); slot.clearTimer = null; }
+  if(slot.hideTimer){ clearTimeout(slot.hideTimer); slot.hideTimer = null; }
+  document.body.classList.remove(slotClass(side));
+  slot.userKey = null;
+  blankSide(side);
+  kiShown[side] = 0;
+  document.getElementById('ki-'+side).textContent = '0';
+  if(!donorSlots.left.userKey && !donorSlots.right.userKey){
+    document.body.classList.remove('solo-mode');
+  }
 }
 
-function hideSoloDisplay(){
-  if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
-  document.body.classList.remove('solo-visible');
-  soloClearTimer = setTimeout(clearSoloDisplay, SOLO_FADE_MS);
+function hideDonorSlot(side, expectedUserKey){
+  const slot = donorSlots[side];
+  if(expectedUserKey && slot.userKey !== expectedUserKey) return;
+  if(slot.hideTimer){ clearTimeout(slot.hideTimer); slot.hideTimer = null; }
+  document.body.classList.remove(slotClass(side));
+  slot.clearTimer = setTimeout(()=>clearDonorSlot(side, expectedUserKey), SOLO_FADE_MS);
 }
 
 function soloCharacterFor(userKey, username, named, face){
@@ -2058,21 +2069,36 @@ function soloCharacterFor(userKey, username, named, face){
   return entry;
 }
 
+function sideForDonorSlot(userKey){
+  if(donorSlots.left.userKey === userKey) return 'left';
+  if(donorSlots.right.userKey === userKey) return 'right';
+  if(!donorSlots.left.userKey) return 'left';
+  if(!donorSlots.right.userKey) return 'right';
+  return donorSlots.left.lastShown <= donorSlots.right.lastShown ? 'left' : 'right';
+}
+
+function displayDonorSlot(side, entry, username){
+  const slot = donorSlots[side];
+  if(slot.hideTimer){ clearTimeout(slot.hideTimer); slot.hideTimer = null; }
+  if(slot.clearTimer){ clearTimeout(slot.clearTimer); slot.clearTimer = null; }
+  document.body.classList.add('solo-mode');
+  document.body.classList.remove(slotClass(side));
+  slot.userKey = entry.key;
+  slot.lastShown = Date.now();
+  sides[side] = {name:entry.name, energy:soloEnergy[entry.key] || 0, phase:0, supporters:[username || entry.user],
+    face:entry.face||null, user:entry.user||entry.name, ownerKey:entry.key, streak:0};
+  setFace(side, entry.face||null, entry.user||entry.name);
+  checkTransform(side);
+  renderSide(side);
+  requestAnimationFrame(()=>document.body.classList.add(slotClass(side)));
+  slot.hideTimer = setTimeout(()=>hideDonorSlot(side, entry.key), SOLO_VISIBLE_MS);
+}
+
 function showSoloDonation(userKey, username, named, face){
   const entry = soloCharacterFor(userKey, username, named, face);
   if(!entry) return;
-  if(soloHideTimer){ clearTimeout(soloHideTimer); soloHideTimer = null; }
-  if(soloClearTimer){ clearTimeout(soloClearTimer); soloClearTimer = null; }
-  document.body.classList.remove('solo-visible');
-  document.body.classList.add('solo-mode');
-  blankSide('right');
-  pickCharacter('left', entry.name, entry.face, entry.user, entry.key);
-  sides.left.energy = soloEnergy[userKey];
-  sides.left.supporters = [username || entry.user];
-  checkTransform('left');
-  renderSide('left');
-  requestAnimationFrame(()=>document.body.classList.add('solo-visible'));
-  soloHideTimer = setTimeout(hideSoloDisplay, SOLO_VISIBLE_MS);
+  const side = sideForDonorSlot(userKey);
+  displayDonorSlot(side, entry, username);
 }
 
 function handleEvent(d){
